@@ -1,9 +1,11 @@
 import configparser
 import pathlib
+import threading
 import tkinter as tk
 import typing
+from trsync.client import Client
 
-from trsync.model import Instance
+from trsync.model import Instance, Workspace
 
 
 class App(tk.Frame):
@@ -17,7 +19,7 @@ class App(tk.Frame):
         self._config = configparser.ConfigParser()
         self._config.read(self._config_file_path)
         self._instances: typing.List[Instance] = []
-        self._update_from_config()
+        threading.Thread.start(self._update_from_config())
 
         # window stuffs
         self.entrythingy = tk.Entry()
@@ -45,7 +47,6 @@ class App(tk.Frame):
             ).split(",")
         ]:
             instance = self._read_config_instance(instance_name)
-            print(instance)
             self._instances.append(instance)
 
     def _read_config_instance(self, instance_name: str) -> None:
@@ -53,11 +54,23 @@ class App(tk.Frame):
         address = self._config[section_name]["address"]
         username = self._config[section_name]["username"]
         password = self._config[section_name]["password"]
-        return Instance(
+        unsecure = self._config[section_name]["unsecure"]
+        workspaces_ids = [
+            int(workspace_id.strip())
+            for workspace_id in self._config[section_name]["workspaces_ids"].split(",")
+        ]
+        instance = Instance(
             address=address,
             username=username,
             password=password,
+            unsecure=unsecure,
+            enabled_workspaces=workspaces_ids,
+            all_workspaces=[],
         )
+        all_workspaces = self._get_workspaces(instance)
+        instance.all_workspaces = all_workspaces
+        return instance
 
-    def _read_from_remotes(self):
-        pass
+    def _get_workspaces(self, instance: Instance) -> typing.List[Workspace]:
+        user_id = Client.check_credentials(instance)
+        return Client(instance, user_id=user_id).get_workspaces()
