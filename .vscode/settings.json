@@ -3,6 +3,7 @@
         "Adresse",
         "Ajouter",
         "Appliquer",
+        "askyesno",
         "connexion",
         "dans",
         "Enregistrer",
@@ -16,6 +17,9 @@
         "toute",
         "trsync",
         "Veuillez",
+        "Voulez",
+        "vous",
+        "vraiment",
         "yscrollcommand",
         "yview"
     ]

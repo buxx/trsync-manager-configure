@@ -64,6 +64,14 @@ class TabFrame(ttk.Frame):
             command=self._validate,
         )
         self._validate_button.grid(row=4, column=0)
+        self._delete_button: typing.Optional[ttk.Button] = None
+        if self._instance is not None:
+            self._delete_button = ttk.Button(
+                self,
+                text="Supprimer",
+                command=self._delete,
+            )
+            self._delete_button.grid(row=4, column=1)
 
         if self._instance is not None:
             self._workspace_lists = DoubleLists(
@@ -136,6 +144,12 @@ class TabFrame(ttk.Frame):
             self._app._set_wait_message()
             self._app._add_instance(address, username, password, unsecure)
             self._app._destroy_wait_message()
+
+    def _delete(self) -> None:
+        if messagebox.askyesno(
+            "Suppression", "Voulez-vous vraiment supprimer cet espace ?"
+        ):
+            self._app._delete_instance(self._instance)
 
     def _apply_workspaces(self):
         assert self._instance is not None

@@ -153,3 +153,8 @@ class App(tk.Frame):
         instance.password = password
         instance.unsecure = unsecure
         self._save_to_config()
+
+    def _delete_instance(self, instance: Instance) -> None:
+        self._instances.remove(instance)
+        self._tabs_frames[instance.address].destroy()
+        self._save_to_config()
