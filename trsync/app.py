@@ -32,7 +32,7 @@ class App(tk.Frame):
         # First tab is for add a new instance
         new_tab_frame = self._build_tab_frame(None)
 
-        threading.Thread(target=self._update_from_config).start()
+        threading.Thread(target=self._load_from_config).start()
 
     def _set_wait_message(self) -> None:
         self._wait_message = tk.Label(self, text="Récupération des informations ...")
@@ -41,7 +41,7 @@ class App(tk.Frame):
     def _destroy_wait_message(self) -> None:
         self._wait_message.destroy()
 
-    def _update_from_config(self) -> None:
+    def _load_from_config(self) -> None:
         # FIXME : message label en cas d'erreur
         for instance_name in [
             instance_name.strip()
@@ -74,7 +74,7 @@ class App(tk.Frame):
             self._config.set(section_name, "address", instance.address)
             self._config.set(section_name, "username", instance.username)
             self._config.set(section_name, "password", instance.password)
-            self._config.set(section_name, "unsecure", instance.unsecure)
+            self._config.set(section_name, "unsecure", str(instance.unsecure))
             self._config.set(
                 section_name,
                 "workspaces_ids",
@@ -93,10 +93,11 @@ class App(tk.Frame):
         address = self._config[section_name]["address"]
         username = self._config[section_name]["username"]
         password = self._config[section_name]["password"]
-        unsecure = self._config[section_name]["unsecure"]
+        unsecure = self._config.getboolean(section_name, "unsecure")
         workspaces_ids = [
             int(workspace_id.strip())
             for workspace_id in self._config[section_name]["workspaces_ids"].split(",")
+            if workspace_id.strip()
         ]
         instance = Instance(
             address=address,
