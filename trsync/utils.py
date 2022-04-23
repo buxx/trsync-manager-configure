@@ -21,6 +21,12 @@ class DoubleLists(tk.Frame):
         self._right_listbox.bind("<<ListboxSelect>>", self._on_right_selected)
         self._right_values: typing.List[str] = []
 
+    def reset(self) -> None:
+        self._left_listbox.delete(0, tk.END)
+        self._right_listbox.delete(0, tk.END)
+        self._left_values.clear()
+        self._right_values.clear()
+
     def add_right(self, item: str) -> None:
         self._right_listbox.insert(tk.END, item)
         self._right_values.append(item)

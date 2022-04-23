@@ -43,6 +43,7 @@ class TabFrame(ttk.Frame):
         )
         self._password_entry = tk.Entry(self, show="*", textvariable=self._password_val)
         self._password_entry.grid(row=2, column=1)
+        # FIXME : default value seems not work ?
         self._secure_var = tk.IntVar(
             self,
             value=0 if self._instance is not None and self._instance.unsecure else 1,
@@ -80,28 +81,7 @@ class TabFrame(ttk.Frame):
                 right_label="Espaces synchronisés",
             )
             self._workspace_lists.grid(row=5, column=0)
-
-            try:
-                user_id = Client.check_credentials(self._instance)
-                workspaces = Client(self._instance, user_id=user_id).get_workspaces()
-                for workspace in workspaces:
-                    # FIXME : bug utf8 ? https://bugs.python.org/issue42225
-                    workspace_name = normalize_workspace_name(workspace.name)
-                    if workspace.id in self._instance.enabled_workspaces:
-                        self._workspace_lists.add_right(workspace_name)
-                    else:
-                        self._workspace_lists.add_left(workspace_name)
-
-            except (CommunicationError, AuthenticationError) as exc:
-                # FIXME : display error
-                pass
-
-            self._apply_workspaces_button = ttk.Button(
-                self,
-                text="Appliquer",
-                command=self._apply_workspaces,
-            )
-            self._apply_workspaces_button.grid(row=6, column=0)
+            self._initialize_workspaces()
 
     def _validate(self):
         address = self._address_entry.get()
@@ -130,20 +110,31 @@ class TabFrame(ttk.Frame):
                 "Erreur de connection",
                 "Erreur dans l'adresse ou pas de connexion",
             )
+            return
         except AuthenticationError:
             messagebox.showerror(
                 "Erreur d'authentification",
                 "Erreur dans l'username ou le mot de passe",
             )
+            return
 
         if self._instance is not None:
             self._app._update_instance(
                 self._instance, address, username, password, unsecure
             )
+            self._initialize_workspaces()
         else:
             self._app._set_wait_message()
             self._app._add_instance(address, username, password, unsecure)
+            self._address_entry.delete(0, "end")
+            self._username_entry.delete(0, "end")
+            self._password_entry.delete(0, "end")
             self._app._destroy_wait_message()
+
+        messagebox.showinfo(
+            "Instance correctement configurée",
+            "Les informations saisies sont correctes",
+        )
 
     def _delete(self) -> None:
         if messagebox.askyesno(
@@ -161,3 +152,28 @@ class TabFrame(ttk.Frame):
         ]
         self._instance.enabled_workspaces = synchronize_workspace_ids
         self._app._save_to_config()
+
+    def _initialize_workspaces(self) -> None:
+        assert self._instance is not None
+        self._workspace_lists.reset()
+        try:
+            user_id = Client.check_credentials(self._instance)
+            workspaces = Client(self._instance, user_id=user_id).get_workspaces()
+            for workspace in workspaces:
+                # FIXME : bug utf8 ? https://bugs.python.org/issue42225
+                workspace_name = normalize_workspace_name(workspace.name)
+                if workspace.id in self._instance.enabled_workspaces:
+                    self._workspace_lists.add_right(workspace_name)
+                else:
+                    self._workspace_lists.add_left(workspace_name)
+
+        except (CommunicationError, AuthenticationError) as exc:
+            # FIXME : display error
+            pass
+
+        self._apply_workspaces_button = ttk.Button(
+            self,
+            text="Appliquer",
+            command=self._apply_workspaces,
+        )
+        self._apply_workspaces_button.grid(row=6, column=0)
