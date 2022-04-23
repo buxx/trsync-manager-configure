@@ -59,7 +59,34 @@ class App(tk.Frame):
 
         self._destroy_wait_message()
         self._tabs_control.pack(expand=1, fill="both")
-        # tab_frame.pack()
+
+    def _save_to_config(self) -> None:
+        self._config.clear()
+        self._config.add_section("server")
+        self._config.set(
+            "server",
+            "instances",
+            ",".join(instance.address for instance in self._instances),
+        )
+        for instance in self._instances:
+            section_name = f"instance.{instance.address}"
+            self._config.add_section(section_name)
+            self._config.set(section_name, "address", instance.address)
+            self._config.set(section_name, "username", instance.username)
+            self._config.set(section_name, "password", instance.password)
+            self._config.set(section_name, "unsecure", instance.unsecure)
+            self._config.set(
+                section_name,
+                "workspaces_ids",
+                ",".join(
+                    str(workspace_id) for workspace_id in instance.enabled_workspaces
+                ),
+            )
+        with self._config_file_path.open("w") as config_file:
+            self._config.write(config_file)
+
+        with self._config_track_file_path.open("w") as config_track_file:
+            config_track_file.write("")
 
     def _read_config_instance(self, instance_name: str) -> None:
         section_name = f"instance.{instance_name}"

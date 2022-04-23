@@ -53,50 +53,10 @@ class TabFrame(ttk.Frame):
             column=1,
         )
 
-        def validate():
-            address = self._address_entry.get()
-            username = self._username_entry.get()
-            password = self._password_entry.get()
-            unsecure = self._secure_var.get() == 0
-
-            if not address.strip() or not username.strip() or not password.strip():
-                messagebox.showinfo(
-                    "Informations incomplètes", "Veuillez saisir toute les informations"
-                )
-
-            try:
-                Client.check_credentials(
-                    Instance(
-                        address=address,
-                        username=username,
-                        password=password,
-                        unsecure=unsecure,
-                        all_workspaces=[],
-                        enabled_workspaces=[],
-                    )
-                )
-            except CommunicationError:
-                messagebox.showerror(
-                    "Erreur de connection",
-                    "Erreur dans l'adresse ou pas de connexion",
-                )
-            except AuthenticationError:
-                messagebox.showerror(
-                    "Erreur d'authentification",
-                    "Erreur dans l'username ou le mot de passe",
-                )
-
-            if self._instance is not None:
-                self._app._update_instance(address, username, password, unsecure)
-            else:
-                self._app._set_wait_message()
-                self._app._add_instance(address, username, password, unsecure)
-                self._app._destroy_wait_message()
-
         self._validate_button = ttk.Button(
             self,
             text="Enregistrer" if self._instance is not None else "Ajouter",
-            command=validate,
+            command=self._validate,
         )
         self._validate_button.grid(row=4, column=0)
 
@@ -120,3 +80,61 @@ class TabFrame(ttk.Frame):
             except (CommunicationError, AuthenticationError) as exc:
                 # FIXME : display error
                 pass
+
+            self._apply_workspaces_button = ttk.Button(
+                self,
+                text="Appliquer",
+                command=self._apply_workspaces,
+            )
+            self._apply_workspaces_button.grid(row=6, column=0)
+
+    def _validate(self):
+        address = self._address_entry.get()
+        username = self._username_entry.get()
+        password = self._password_entry.get()
+        unsecure = self._secure_var.get() == 0
+
+        if not address.strip() or not username.strip() or not password.strip():
+            messagebox.showinfo(
+                "Informations incomplètes", "Veuillez saisir toute les informations"
+            )
+
+        try:
+            Client.check_credentials(
+                Instance(
+                    address=address,
+                    username=username,
+                    password=password,
+                    unsecure=unsecure,
+                    all_workspaces=[],
+                    enabled_workspaces=[],
+                )
+            )
+        except CommunicationError:
+            messagebox.showerror(
+                "Erreur de connection",
+                "Erreur dans l'adresse ou pas de connexion",
+            )
+        except AuthenticationError:
+            messagebox.showerror(
+                "Erreur d'authentification",
+                "Erreur dans l'username ou le mot de passe",
+            )
+
+        if self._instance is not None:
+            self._app._update_instance(address, username, password, unsecure)
+        else:
+            self._app._set_wait_message()
+            self._app._add_instance(address, username, password, unsecure)
+            self._app._destroy_wait_message()
+
+    def _apply_workspaces(self):
+        assert self._instance is not None
+        synchronize_workspace_names = self._workspace_lists.get_right_values()
+        synchronize_workspace_ids = [
+            workspace.id
+            for workspace in self._instance.all_workspaces
+            if workspace.name in synchronize_workspace_names
+        ]
+        self._instance.enabled_workspaces = synchronize_workspace_ids
+        self._app._save_to_config()
