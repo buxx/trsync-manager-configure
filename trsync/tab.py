@@ -6,11 +6,16 @@ from trsync.client import Client
 from trsync.error import AuthenticationError, CommunicationError
 
 from trsync.model import Instance
-from trsync.utils import DoubleLists
+from trsync.utils import DoubleLists, normalize_workspace_name
+
+if typing.TYPE_CHECKING:
+    from trsync.app import App
 
 
 class TabFrame(ttk.Frame):
-    def __init__(self, parent, app, instance: typing.Optional[Instance], **kwargs):
+    def __init__(
+        self, parent, app: "App", instance: typing.Optional[Instance], **kwargs
+    ):
         ttk.Frame.__init__(self, parent, **kwargs)
 
         self._app = app
@@ -72,10 +77,12 @@ class TabFrame(ttk.Frame):
                 user_id = Client.check_credentials(self._instance)
                 workspaces = Client(self._instance, user_id=user_id).get_workspaces()
                 for workspace in workspaces:
+                    # FIXME : bug utf8 ? https://bugs.python.org/issue42225
+                    workspace_name = normalize_workspace_name(workspace.name)
                     if workspace.id in self._instance.enabled_workspaces:
-                        self._workspace_lists.add_right(workspace.name)
+                        self._workspace_lists.add_right(workspace_name)
                     else:
-                        self._workspace_lists.add_left(workspace.name)
+                        self._workspace_lists.add_left(workspace_name)
 
             except (CommunicationError, AuthenticationError) as exc:
                 # FIXME : display error
@@ -122,7 +129,9 @@ class TabFrame(ttk.Frame):
             )
 
         if self._instance is not None:
-            self._app._update_instance(address, username, password, unsecure)
+            self._app._update_instance(
+                self._instance, address, username, password, unsecure
+            )
         else:
             self._app._set_wait_message()
             self._app._add_instance(address, username, password, unsecure)
@@ -134,7 +143,7 @@ class TabFrame(ttk.Frame):
         synchronize_workspace_ids = [
             workspace.id
             for workspace in self._instance.all_workspaces
-            if workspace.name in synchronize_workspace_names
+            if normalize_workspace_name(workspace.name) in synchronize_workspace_names
         ]
         self._instance.enabled_workspaces = synchronize_workspace_ids
         self._app._save_to_config()

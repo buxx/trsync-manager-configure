@@ -138,3 +138,18 @@ class App(tk.Frame):
         )
         self._instances.append(instance)
         self._build_tab_frame(instance)
+        self._save_to_config()
+
+    def _update_instance(
+        self,
+        instance: Instance,
+        address: str,
+        username: str,
+        password: str,
+        unsecure: bool,
+    ) -> None:
+        instance.address = address
+        instance.username = username
+        instance.password = password
+        instance.unsecure = unsecure
+        self._save_to_config()

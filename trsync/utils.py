@@ -54,3 +54,7 @@ class DoubleLists(tk.Frame):
             self.add_left(selected_value)
             self._right_listbox.delete(selected_index)
             self._right_values.remove(selected_value)
+
+
+def normalize_workspace_name(name: str) -> str:
+    return name.encode("ascii", "ignore").decode()
