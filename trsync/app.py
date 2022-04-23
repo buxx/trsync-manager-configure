@@ -10,6 +10,7 @@ from tkinter import messagebox
 from trsync.error import AuthenticationError, CommunicationError
 
 from trsync.model import Instance, Workspace
+from trsync.utils import DoubleLists, ScrollableFrame
 
 
 class App(tk.Frame):
@@ -27,29 +28,19 @@ class App(tk.Frame):
         # window stuffs
         self._tabs_control = ttk.Notebook(self)
         self._tabs_frames: typing.Dict[typing.Optional[str], ttk.Frame] = {}
-        self._wait_message = tk.Label(self, text="Récupération des informations ...")
-        self._wait_message.pack()
+        self._set_wait_message()
 
         # First tab is for add a new instance
         new_tab_frame = self._build_tab_frame(None)
 
         threading.Thread(target=self._update_from_config).start()
-        # self.entrythingy = tk.Entry()
-        # self.entrythingy.pack()
 
-        # # Create the application variable.
-        # self.contents = tk.StringVar()
-        # # Set it to some value.
-        # self.contents.set("this is a variable")
-        # # Tell the entry widget to watch this variable.
-        # self.entrythingy["textvariable"] = self.contents
+    def _set_wait_message(self) -> None:
+        self._wait_message = tk.Label(self, text="Récupération des informations ...")
+        self._wait_message.pack()
 
-        # # Define a callback for when the user hits return.
-        # # It prints the current value of the variable.
-        # self.entrythingy.bind("<Key-Return>", self.print_contents)
-
-    def print_contents(self, event):
-        print("Hi. The current entry content is:", self.contents.get())
+    def _destroy_wait_message(self) -> None:
+        self._wait_message.destroy()
 
     def _update_from_config(self) -> None:
         # FIXME : message label en cas d'erreur
@@ -67,7 +58,7 @@ class App(tk.Frame):
             except KeyError:
                 tab_frame = self._build_tab_frame(instance)
 
-        self._wait_message.destroy()
+        self._destroy_wait_message()
         self._tabs_control.pack(expand=1, fill="both")
         # tab_frame.pack()
 
@@ -114,11 +105,20 @@ class App(tk.Frame):
         password_label.grid(row=2, column=0)
         secure_label = tk.Label(tab_frame, text="Sécurisé")
         secure_label.grid(row=3, column=0)
-        address_entry = tk.Entry(tab_frame)
+        address_val = tk.StringVar(
+            value=instance.address if instance is not None else ""
+        )
+        address_entry = tk.Entry(tab_frame, textvariable=address_val)
         address_entry.grid(row=0, column=1)
-        username_entry = tk.Entry(tab_frame)
+        username_val = tk.StringVar(
+            value=instance.username if instance is not None else ""
+        )
+        username_entry = tk.Entry(tab_frame, textvariable=username_val)
         username_entry.grid(row=1, column=1)
-        password_entry = tk.Entry(tab_frame, show="*")
+        password_val = tk.StringVar(
+            value=instance.password if instance is not None else ""
+        )
+        password_entry = tk.Entry(tab_frame, show="*", textvariable=password_val)
         password_entry.grid(row=2, column=1)
         secure_var = tk.IntVar(
             tab_frame, value=0 if instance is not None and instance.unsecure else 1
@@ -170,7 +170,9 @@ class App(tk.Frame):
             if instance is not None:
                 self._update_instance(address, username, password, unsecure)
             else:
+                self._set_wait_message()
                 self._add_instance(address, username, password, unsecure)
+                self._destroy_wait_message()
 
         validate_button = ttk.Button(
             tab_frame,
@@ -179,4 +181,39 @@ class App(tk.Frame):
         )
         validate_button.grid(row=4, column=0)
 
+        if instance is not None:
+            workspace_lists = DoubleLists(
+                tab_frame,
+                left_label="Espaces non synchronisés",
+                right_label="Espaces synchronisés",
+            )
+            workspace_lists.grid(row=5, column=0)
+
+            try:
+                user_id = Client.check_credentials(instance)
+                workspaces = Client(instance, user_id=user_id).get_workspaces()
+                for workspace in workspaces:
+                    if workspace.id in instance.enabled_workspaces:
+                        workspace_lists.add_right(workspace.name)
+                    else:
+                        workspace_lists.add_left(workspace.name)
+
+            except (CommunicationError, AuthenticationError) as exc:
+                # FIXME : display error
+                pass
+
         return tab_frame
+
+    def _add_instance(
+        self, address: str, username: str, password: str, unsecure: bool
+    ) -> None:
+        instance = Instance(
+            address=address,
+            username=username,
+            password=password,
+            unsecure=unsecure,
+            all_workspaces=[],
+            enabled_workspaces=[],
+        )
+        self._instances.append(instance)
+        self._build_tab_frame(instance)
