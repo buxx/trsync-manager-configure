@@ -52,6 +52,7 @@ class App(tk.Frame):
             instance = self._read_config_instance(instance_name)
             self._instances.append(instance)
 
+            # TODO : think about on instance by thread (to avoid blocking)
             try:
                 tab_frame = self._tabs_frames[instance.address]
             except KeyError:
