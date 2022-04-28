@@ -1,4 +1,4 @@
-import collections
+import os
 import configparser
 import pathlib
 import threading
@@ -6,7 +6,6 @@ import tkinter as tk
 from tkinter import ttk
 import typing
 from trsync.client import Client
-from tkinter import messagebox
 
 from trsync.model import Instance, Workspace
 from trsync.tab import TabFrame
@@ -18,8 +17,16 @@ class App(tk.Frame):
         self.pack()
 
         # trsync stuffs
-        self._config_file_path = pathlib.Path.home() / ".trsync.conf"
-        self._config_track_file_path = pathlib.Path.home() / ".trsync.conf.track"
+        if os.name == "nt":
+            self._config_file_path = (
+                pathlib.Path.home() / "AppData" / "trsync" / "trsync.conf"
+            )
+            self._config_track_file_path = (
+                pathlib.Path.home() / "AppData" / "trsync" / "trsync.conf.track"
+            )
+        else:
+            self._config_file_path = pathlib.Path.home() / ".trsync.conf"
+            self._config_track_file_path = pathlib.Path.home() / ".trsync.conf.track"
         self._config = configparser.ConfigParser()
         self._config.read(self._config_file_path)
         self._instances: typing.List[Instance] = []
@@ -42,13 +49,16 @@ class App(tk.Frame):
         self._wait_message.destroy()
 
     def _load_from_config(self) -> None:
+        print(f"Load config from {self._config_file_path}")
         # FIXME : message label en cas d'erreur
         for instance_name in [
             instance_name.strip()
             for instance_name in self._config.get(
                 "server", "instances", fallback=""
             ).split(",")
+            if instance_name
         ]:
+            print(f"Read instance {instance_name}")
             instance = self._read_config_instance(instance_name)
             self._instances.append(instance)
 
@@ -62,6 +72,7 @@ class App(tk.Frame):
         self._tabs_control.pack(expand=1, fill="both")
 
     def _save_to_config(self) -> None:
+        print(f"Save config into {self._config_file_path}")
         local_folder = self._config.get("server", "local_folder")
         trsync_bin_path = self._config.get("server", "trsync_bin_path")
         self._config.clear()
