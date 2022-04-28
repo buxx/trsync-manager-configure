@@ -48,7 +48,9 @@ class App(tk.Frame):
             for instance_name in self._config.get(
                 "server", "instances", fallback=""
             ).split(",")
+            if instance_name
         ]:
+            print(f"Read instance {instance_name}")
             instance = self._read_config_instance(instance_name)
             self._instances.append(instance)
 
