@@ -6,9 +6,11 @@ import tkinter as tk
 from tkinter import ttk
 import typing
 from trsync.client import Client
+from tkinter import messagebox
+
 
 from trsync.model import Instance, Workspace
-from trsync.tab import TabFrame
+from trsync.tab import ConfigFrame, TabFrame
 
 
 class App(tk.Frame):
@@ -36,8 +38,8 @@ class App(tk.Frame):
         self._tabs_frames: typing.Dict[typing.Optional[str], ttk.Frame] = {}
         self._set_wait_message()
 
-        # First tab is for add a new instance
-        new_tab_frame = self._build_tab_frame(None)
+        self._build_config_frame()
+        self._build_tab_frame(None)
 
         threading.Thread(target=self._load_from_config).start()
 
@@ -74,6 +76,12 @@ class App(tk.Frame):
     def _save_to_config(self) -> None:
         print(f"Save config into {self._config_file_path}")
         local_folder = self._config.get("server", "local_folder")
+        if not local_folder:
+            messagebox.showerror(
+                "Erreur de configuration",
+                "Veuillez choisir un dossier local dans la configuration",
+            )
+            return
         trsync_bin_path = self._config.get("server", "trsync_bin_path")
         self._config.clear()
         self._config.add_section("server")
@@ -130,6 +138,10 @@ class App(tk.Frame):
     def _get_workspaces(self, instance: Instance) -> typing.List[Workspace]:
         user_id = Client.check_credentials(instance)
         return Client(instance, user_id=user_id).get_workspaces()
+
+    def _build_config_frame(self) -> None:
+        config_frame = ConfigFrame(self._tabs_control, self)
+        self._tabs_control.add(config_frame, text="Configuration")
 
     def _build_tab_frame(self, instance: typing.Optional[Instance]) -> ttk.Frame:
         tab_frame = TabFrame(self._tabs_control, self, instance)

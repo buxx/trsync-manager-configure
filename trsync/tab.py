@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
+from tkinter.filedialog import askdirectory
 import typing
 from trsync.client import Client
 from trsync.error import AuthenticationError, CommunicationError
@@ -10,6 +11,38 @@ from trsync.utils import DoubleLists, normalize_workspace_name
 
 if typing.TYPE_CHECKING:
     from trsync.app import App
+
+
+class ConfigFrame(ttk.Frame):
+    def __init__(self, parent, app: "App", **kwargs):
+        ttk.Frame.__init__(self, parent, **kwargs)
+        self._app = app
+
+        self.choose_folder_label_var = tk.StringVar()
+        if local_folder_path_str := self._app._config.get(
+            "server", "local_folder", fallback=None
+        ):
+            self.choose_folder_label_var.set(f"Dossier local : {local_folder_path_str}")
+        else:
+            self.choose_folder_label_var.set("Veuillez choisir un dossier")
+        self._local_folder_label = tk.Label(
+            self, textvariable=self.choose_folder_label_var
+        )
+        self._local_folder_label.grid(row=0, column=0)
+
+        self._choose_button = ttk.Button(
+            self,
+            text="Sélectionner",
+            command=self._choose,
+        )
+        self._choose_button.grid(row=0, column=1)
+
+    def _choose(self) -> None:
+        local_folder_path = askdirectory()
+        if local_folder_path:
+            self._app._config.set("server", "local_folder", local_folder_path)
+            self.choose_folder_label_var.set(f"Dossier local : {local_folder_path}")
+            self._app._save_to_config()
 
 
 class TabFrame(ttk.Frame):
