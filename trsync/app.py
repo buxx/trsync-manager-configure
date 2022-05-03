@@ -21,10 +21,10 @@ class App(tk.Frame):
         # trsync stuffs
         if os.name == "nt":
             self._config_file_path = (
-                pathlib.Path.home() / "AppData" / "trsync" / "trsync.conf"
+                pathlib.Path.home() / "AppData" / "Local" / "trsync.conf"
             )
             self._config_track_file_path = (
-                pathlib.Path.home() / "AppData" / "trsync" / "trsync.conf.track"
+                pathlib.Path.home() / "AppData" / "Local" / "trsync.conf.track"
             )
         else:
             self._config_file_path = pathlib.Path.home() / ".trsync.conf"
