@@ -179,11 +179,16 @@ class TabFrame(ttk.Frame):
         assert self._instance is not None
         synchronize_workspace_names = self._workspace_lists.get_right_values()
         print(f"Right values are : ", synchronize_workspace_names)
-        synchronize_workspace_ids = [
-            workspace.id
-            for workspace in self._instance.all_workspaces
-            if normalize_workspace_name(workspace.name) in synchronize_workspace_names
-        ]
+
+        synchronize_workspace_ids = []
+        for workspace in self._instance.all_workspaces:
+            print(
+                f"Test '{workspace.name}' ('{normalize_workspace_name(workspace.name)}') "
+            )
+            if normalize_workspace_name(workspace.name) in synchronize_workspace_names:
+                print("append")
+                synchronize_workspace_ids.append(workspace.id)
+
         print(f"Right values ids are : ", synchronize_workspace_ids)
         self._instance.enabled_workspaces = synchronize_workspace_ids
         self._app._save_to_config()
