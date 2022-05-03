@@ -165,6 +165,9 @@ class App(tk.Frame):
             all_workspaces=[],
             enabled_workspaces=[],
         )
+        # TODO : errors can happens
+        all_workspaces = self._get_workspaces(instance)
+        instance.all_workspaces = all_workspaces
         self._instances.append(instance)
         self._build_tab_frame(instance)
         self._save_to_config()
