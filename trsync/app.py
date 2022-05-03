@@ -99,6 +99,7 @@ class App(tk.Frame):
             self._config.set(section_name, "username", instance.username)
             self._config.set(section_name, "password", instance.password)
             self._config.set(section_name, "unsecure", str(instance.unsecure))
+            print("Workspaces ids : ", instance.enabled_workspaces)
             self._config.set(
                 section_name,
                 "workspaces_ids",
