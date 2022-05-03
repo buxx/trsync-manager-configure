@@ -184,7 +184,7 @@ class TabFrame(ttk.Frame):
             for workspace in self._instance.all_workspaces
             if normalize_workspace_name(workspace.name) in synchronize_workspace_names
         ]
-        print(f"Right values ids are : ", synchronize_workspace_names)
+        print(f"Right values ids are : ", synchronize_workspace_ids)
         self._instance.enabled_workspaces = synchronize_workspace_ids
         self._app._save_to_config()
 
