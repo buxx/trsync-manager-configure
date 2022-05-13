@@ -82,7 +82,6 @@ class App(tk.Frame):
                 "Veuillez choisir un dossier local dans la configuration",
             )
             return
-        trsync_bin_path = self._config.get("server", "trsync_bin_path")
         self._config.clear()
         self._config.add_section("server")
         self._config.set(
@@ -91,7 +90,6 @@ class App(tk.Frame):
             ",".join(instance.address for instance in self._instances),
         )
         self._config.set("server", "local_folder", local_folder)
-        self._config.set("server", "trsync_bin_path", trsync_bin_path)
         for instance in self._instances:
             section_name = f"instance.{instance.address}"
             self._config.add_section(section_name)
