@@ -90,7 +90,8 @@ class App(tk.Frame):
         self._config.set("server", "local_folder", local_folder)
         for instance in self._instances:
             section_name = f"instance.{instance.address}"
-            self._config.add_section(section_name)
+            if not self._config.has_section(section_name):
+                self._config.add_section(section_name)
             self._config.set(section_name, "address", instance.address)
             self._config.set(section_name, "username", instance.username)
             self._config.set(section_name, "password", instance.password)
