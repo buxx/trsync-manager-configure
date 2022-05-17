@@ -82,8 +82,6 @@ class App(tk.Frame):
                 "Veuillez choisir un dossier local dans la configuration",
             )
             return
-        self._config.clear()
-        self._config.add_section("server")
         self._config.set(
             "server",
             "instances",
