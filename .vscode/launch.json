@@ -8,7 +8,11 @@
             "program": "${workspaceRoot}/run.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
-            "justMyCode": true
+            "justMyCode": true,
+            "args": [
+                "--password-setter-port",
+                "5008"
+            ]
         }
     ]
 }

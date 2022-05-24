@@ -8,3 +8,11 @@ class CommunicationError(Exception):
 
 class NotFoundError(Exception):
     pass
+
+
+class FailToSetPassword(Exception):
+    pass
+
+
+class FailToGetPassword(Exception):
+    pass

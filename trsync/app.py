@@ -5,8 +5,11 @@ import threading
 import tkinter as tk
 from tkinter import ttk
 import typing
+
+import requests
 from trsync.client import Client
 from tkinter import messagebox
+from trsync.error import AuthenticationError, FailToGetPassword, FailToSetPassword
 
 
 from trsync.model import Instance, Workspace
@@ -14,8 +17,15 @@ from trsync.tab import ConfigFrame, TabFrame
 
 
 class App(tk.Frame):
-    def __init__(self, master):
+    def __init__(
+        self,
+        master,
+        password_setter_port: typing.Optional[int] = None,
+        password_setter_token: typing.Optional[str] = None,
+    ):
         super().__init__(master)
+        self._password_setter_port = password_setter_port
+        self._password_setter_token = password_setter_token
         self.pack()
 
         # trsync stuffs
@@ -94,7 +104,21 @@ class App(tk.Frame):
                 self._config.add_section(section_name)
             self._config.set(section_name, "address", instance.address)
             self._config.set(section_name, "username", instance.username)
-            self._config.set(section_name, "password", instance.password)
+            if self._password_setter_port is not None:
+                try:
+                    self._set_password(instance.address, instance.password)
+                except FailToSetPassword as exc:
+                    messagebox.showerror(
+                        "Erreur d'enregistrement",
+                        (
+                            "Impossible d'enregistrer le mot de "
+                            f"passe pour l'instance '{instance.address}' : "
+                            f"'{exc}'"
+                        ),
+                    )
+                    continue
+            else:
+                self._config.set(section_name, "password", instance.password)
             self._config.set(section_name, "unsecure", str(instance.unsecure))
             print("Workspaces ids : ", instance.enabled_workspaces)
             self._config.set(
@@ -114,7 +138,11 @@ class App(tk.Frame):
         section_name = f"instance.{instance_name}"
         address = self._config[section_name]["address"]
         username = self._config[section_name]["username"]
-        password = self._config[section_name]["password"]
+        try:
+            password = self._get_password(instance_name)
+        except FailToGetPassword as exc:
+            print(f"Fail to get password for instance '{exc}': ", exc)
+            password = ""
         unsecure = self._config.getboolean(section_name, "unsecure")
         workspaces_ids = [
             int(workspace_id.strip())
@@ -129,8 +157,16 @@ class App(tk.Frame):
             enabled_workspaces=workspaces_ids,
             all_workspaces=[],
         )
-        all_workspaces = self._get_workspaces(instance)
-        instance.all_workspaces = all_workspaces
+        try:
+            all_workspaces = self._get_workspaces(instance)
+            instance.all_workspaces = all_workspaces
+        except AuthenticationError as exc:
+            instance.all_workspaces = []
+            messagebox.showerror(
+                "Erreur de configuration",
+                f"Une erreur est survenue lors de l'authentification auprès de {address}",
+            )
+
         return instance
 
     def _get_workspaces(self, instance: Instance) -> typing.List[Workspace]:
@@ -187,3 +223,32 @@ class App(tk.Frame):
         self._instances.remove(instance)
         self._tabs_frames[instance.address].destroy()
         self._save_to_config()
+
+    def _set_password(self, instance_name: str, password: str) -> None:
+        assert self._password_setter_port is not None
+        try:
+            response = requests.post(
+                f"http://127.0.0.1:{self._password_setter_port}/password/{instance_name}",
+                data=password,
+                headers={"X-Auth-Token": self._password_setter_token},
+            )
+            if response.status_code != 201:
+                raise FailToSetPassword(
+                    f"Unexpected response status code '{response.status_code}'"
+                )
+        except Exception as exc:
+            raise FailToSetPassword(str(exc))
+
+    def _get_password(self, instance_name: str) -> str:
+        try:
+            response = requests.get(
+                f"http://127.0.0.1:{self._password_setter_port}/password/{instance_name}",
+                headers={"X-Auth-Token": self._password_setter_token},
+            )
+            if response.status_code != 200:
+                raise FailToSetPassword(
+                    f"Unexpected response status code '{response.status_code}'"
+                )
+            return response.text
+        except Exception as exc:
+            raise FailToGetPassword(str(exc))
