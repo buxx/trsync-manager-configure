@@ -24,7 +24,8 @@ def main():
         ), "You must provide --password-setter-token option if --password-setter-port given"
 
     root = tk.Tk()
-    root.geometry("600x450")
+    root.title("Tracim Sync")
+    root.geometry("375x450")
     app = App(
         root,
         password_setter_port=args.password_setter_port,

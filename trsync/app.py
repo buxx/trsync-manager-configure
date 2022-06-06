@@ -26,7 +26,7 @@ class App(tk.Frame):
         super().__init__(master)
         self._password_setter_port = password_setter_port
         self._password_setter_token = password_setter_token
-        self.pack()
+        self.pack(expand=True, fill=tk.BOTH)
 
         # trsync stuffs
         if os.name == "nt":
