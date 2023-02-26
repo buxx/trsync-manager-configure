@@ -47,12 +47,42 @@ class ConfigFrame(ttk.Frame):
         )
         self._choose_button.grid(row=2, column=0)
 
+        self._label2_var = tk.StringVar()
+        self._label2_var.set("Pas de suppression distance au démarrage")
+        self._label2 = tk.Label(
+            self,
+            textvariable=self._label2_var,
+            font=("Arial Bold", 15),
+        )
+        self._label2.grid(row=3, column=0)
+        self._prevent_delete_sync_var = tk.IntVar()
+        self._prevent_delete_sync_var.set(
+            int(self._app._config.get("server", "prevent_delete_sync", fallback="1"))
+        )
+        self._prevent_delete_sync_cb = tk.Checkbutton(
+            self,
+            text="",
+            variable=self._prevent_delete_sync_var,
+            onvalue=1,
+            offvalue=0,
+            command=self._change_prevent_delete_sync,
+        )
+        self._prevent_delete_sync_cb.grid(row=4, column=0)
+
     def _choose(self) -> None:
         local_folder_path = askdirectory()
         if local_folder_path:
             self._app._config.set("server", "local_folder", local_folder_path)
             self.choose_folder_label_var.set(f"Dossier local : {local_folder_path}")
             self._app._save_to_config()
+
+    def _change_prevent_delete_sync(self) -> None:
+        self._app._config.set(
+            "server",
+            "prevent_delete_sync",
+            str(self._prevent_delete_sync_var.get()),
+        )
+        self._app._save_to_config()
 
 
 class TabFrame(ttk.Frame):
