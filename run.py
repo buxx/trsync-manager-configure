@@ -25,7 +25,7 @@ def main():
 
     root = tk.Tk()
     root.title("TrSync")
-    root.geometry("375x450")
+    root.geometry("500x650")
     app = App(
         root,
         password_setter_port=args.password_setter_port,
