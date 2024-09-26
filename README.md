@@ -1,6 +1,6 @@
 # Trsync manager configure
 
-⚠ **This repository is obsolete. Configuration window is now included in [trsync](https://github.com/buxx/trsync) repository.
+⚠ **This repository is obsolete. Configuration window is now included in [trsync](https://github.com/buxx/trsync) repository**.
 
 This graphical application permit to manage [trsync manager](https://github.com/buxx/trsync/tree/main/manager) config file and signal [trsync manager](https://github.com/buxx/trsync/tree/main/manager) config reload.
 
